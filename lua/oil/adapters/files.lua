@@ -61,6 +61,26 @@ file_columns.size = {
     if not stat then
       return columns.EMPTY
     end
+
+    local function du(stat)
+      -- TODO: Make this function work asynchronously
+      -- TODO: Make this function work with remote files (oil-ssh)
+      -- TODO: Cache results
+      -- TODO: Bugs out when in root fodler
+      local filepath = vim.api.nvim_buf_get_name(0):gsub("oil://", "") .. stat[2]
+
+      if filepath:match("oil-ssh") then
+        return stat.size
+      end
+
+      vim.print(filepath)
+      return tonumber(vim.fn.system("sudo du -s " .. filepath):match("^(%d+)")) * 1024
+    end
+
+    if stat.type == "directory" then
+      stat.size = du(entry)
+    end
+
     if stat.size >= 1e9 then
       return string.format("%.1fG", stat.size / 1e9)
     elseif stat.size >= 1e6 then
